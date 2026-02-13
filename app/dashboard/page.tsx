@@ -10,15 +10,27 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // check session first
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user) {
-        setUser(data.session.user);
-      }
-      setLoading(false);
-    });
+    // ⭐ STEP 1: detect OAuth session from URL
+    const hash = window.location.hash;
 
-    // listen for login events (VERY IMPORTANT)
+    if (hash.includes("access_token")) {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session?.user) {
+          setUser(data.session.user);
+        }
+        setLoading(false);
+      });
+    } else {
+      // ⭐ STEP 2: normal session check
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session?.user) {
+          setUser(data.session.user);
+        }
+        setLoading(false);
+      });
+    }
+
+    // ⭐ STEP 3: listen for login events
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session?.user) {
