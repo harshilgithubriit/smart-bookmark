@@ -6,20 +6,43 @@ import BookmarkForm from "@/components/BookmarkForm";
 import BookmarkList from "@/components/BookmarkList";
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) {
-        setUser(data.user);
+    // get existing session after OAuth redirect
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setLoading(false);
+    };
+
+    getSession();
+
+    // listen for auth changes (important after Google login)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
-    });
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
+
+  if (loading)
+    return (
+      <p className="text-center mt-10 text-lg font-medium">
+        Loading...
+      </p>
+    );
 
   if (!user)
     return (
       <p className="text-center mt-10 text-lg font-medium">
-        Loading...
+        Please login
       </p>
     );
 
