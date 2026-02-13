@@ -10,23 +10,20 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // ✅ Get session properly
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        setUser(session.user);
+    // check session first
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        setUser(data.session.user);
       }
-
       setLoading(false);
-    };
+    });
 
-    getSession();
-
-    // ✅ Listen for login changes (IMPORTANT)
+    // listen for login events (VERY IMPORTANT)
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null);
+        if (session?.user) {
+          setUser(session.user);
+        }
       }
     );
 
@@ -35,11 +32,14 @@ export default function Dashboard() {
     };
   }, []);
 
-  if (loading)
-    return <p className="text-center mt-10">Loading...</p>;
+  if (loading) return <p className="text-center mt-10">Loading...</p>;
 
   if (!user)
-    return <p className="text-center mt-10 text-lg">Please login</p>;
+    return (
+      <p className="text-center mt-10 text-lg font-semibold">
+        Please login
+      </p>
+    );
 
   return (
     <div className="max-w-xl mx-auto mt-10">
