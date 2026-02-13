@@ -6,11 +6,7 @@ import { supabase } from "@/lib/supabase";
 export default function BookmarkList({ user }) {
   const [bookmarks, setBookmarks] = useState([]);
 
-  useEffect(() => {
-    fetchBookmarks();
-  }, []);
-
-  async function fetchBookmarks() {
+  const fetchBookmarks = async () => {
     const { data } = await supabase
       .from("bookmarks")
       .select("*")
@@ -18,11 +14,27 @@ export default function BookmarkList({ user }) {
       .order("created_at", { ascending: false });
 
     setBookmarks(data || []);
-  }
+  };
+
+  useEffect(() => {
+    fetchBookmarks();
+
+    const channel = supabase
+      .channel("realtime bookmarks")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookmarks" },
+        () => fetchBookmarks()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const deleteBookmark = async (id) => {
     await supabase.from("bookmarks").delete().eq("id", id);
-    fetchBookmarks();
   };
 
   return (

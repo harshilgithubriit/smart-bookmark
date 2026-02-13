@@ -18,10 +18,10 @@ export default function BookmarkForm({ user }) {
 
     if (error) alert(error.message);
     else {
-      setUrl("");
-      setTitle("");
-      location.reload();
-    }
+  setUrl("");
+  setTitle("");
+}
+
   };
 
   return (
