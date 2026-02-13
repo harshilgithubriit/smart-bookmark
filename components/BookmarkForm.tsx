@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default function BookmarkForm({ user }) {
+export default function BookmarkForm({ user }: { user: any }) {
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
 
@@ -18,10 +18,10 @@ export default function BookmarkForm({ user }) {
 
     if (error) alert(error.message);
     else {
-  setUrl("");
-  setTitle("");
-}
-
+      setUrl("");
+      setTitle("");
+      location.reload();
+    }
   };
 
   return (

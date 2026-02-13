@@ -6,22 +6,28 @@ import BookmarkForm from "@/components/BookmarkForm";
 import BookmarkList from "@/components/BookmarkList";
 
 export default function Dashboard() {
-const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-  if (data?.user) {
-    setUser(data.user);
-  }
-});
+      if (data?.user) {
+        setUser(data.user);
+      }
+    });
   }, []);
 
-  if (!user) return <p>Loading...</p>;
+  if (!user)
+    return (
+      <p className="text-center mt-10 text-lg font-medium">
+        Loading...
+      </p>
+    );
 
   return (
     <div className="max-w-xl mx-auto mt-10">
-      <h1 className="text-xl font-bold">Welcome {user.user_metadata?.full_name || "User"}
-</h1>
+      <h1 className="text-xl font-bold mb-4">
+        Welcome {user.user_metadata?.full_name || "User"}
+      </h1>
 
       <BookmarkForm user={user} />
       <BookmarkList user={user} />

@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default function BookmarkList({ user }) {
-  const [bookmarks, setBookmarks] = useState([]);
+export default function BookmarkList({ user }: { user: any }) {
+  const [bookmarks, setBookmarks] = useState<any[]>([]);
 
   const fetchBookmarks = async () => {
     const { data } = await supabase
@@ -33,7 +33,7 @@ export default function BookmarkList({ user }) {
     };
   }, []);
 
-  const deleteBookmark = async (id) => {
+  const deleteBookmark = async (id: string) => {
     await supabase.from("bookmarks").delete().eq("id", id);
   };
 
