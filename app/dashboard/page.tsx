@@ -6,48 +6,40 @@ import BookmarkForm from "@/components/BookmarkForm";
 import BookmarkList from "@/components/BookmarkList";
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const initUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      setUser(session.user);
-    }
-    setLoading(false);
-  };
+    // ✅ Get session properly
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
 
-  initUser();
-
-  const { data: listener } = supabase.auth.onAuthStateChange(
-    (_event, session) => {
       if (session?.user) {
         setUser(session.user);
-      } else {
-        setUser(null);
       }
-    }
-  );
 
-  return () => {
-    listener.subscription.unsubscribe();
-  };
-}, []);
+      setLoading(false);
+    };
+
+    getSession();
+
+    // ✅ Listen for login changes (IMPORTANT)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   if (loading)
-    return (
-      <p className="text-center mt-10 text-lg font-medium">
-        Loading...
-      </p>
-    );
+    return <p className="text-center mt-10">Loading...</p>;
 
   if (!user)
-    return (
-      <p className="text-center mt-10 text-lg font-medium">
-        Please login
-      </p>
-    );
+    return <p className="text-center mt-10 text-lg">Please login</p>;
 
   return (
     <div className="max-w-xl mx-auto mt-10">
