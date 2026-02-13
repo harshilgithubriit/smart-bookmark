@@ -8,68 +8,66 @@ import BookmarkList from "@/components/BookmarkList";
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const init = async () => {
+    // Check for OAuth callback parameters
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const queryParams = new URLSearchParams(window.location.search);
+    
+    const hasOAuthParams = 
+      hashParams.has('access_token') || 
+      queryParams.has('code');
+
+    const initAuth = async () => {
       try {
-        console.log("🔍 Starting auth check...");
+        if (hasOAuthParams) {
+          // If we have OAuth params, wait for Supabase to process them
+          console.log("🔄 Processing OAuth callback...");
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        // Get the session
-        const { data, error } = await supabase.auth.getSession();
-        
-        console.log("📦 Session data:", data);
-        console.log("❌ Session error:", error);
-        console.log("👤 User:", data.session?.user);
-        
+        console.log("📦 Session:", session);
+        console.log("❌ Error:", error);
+
         if (error) {
           console.error("Session error:", error);
-          setError(error.message);
         }
-        
-        setUser(data.session?.user ?? null);
 
-        // Remove access token from URL
-        window.history.replaceState({}, document.title, "/dashboard");
-      } catch (error: any) {
-        console.error("💥 Error in init:", error);
-        setError(error.message);
+        setUser(session?.user ?? null);
+        
+        // Clean URL after processing
+        if (hasOAuthParams) {
+          window.history.replaceState({}, document.title, "/dashboard");
+        }
+      } catch (error) {
+        console.error("💥 Auth error:", error);
       } finally {
-        console.log("✅ Setting loading to false");
         setLoading(false);
       }
     };
 
-    init();
+    initAuth();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("🔄 Auth state changed:", event, session);
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("🔄 Auth event:", event, session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
     return () => {
-      listener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
-
-  console.log("🎨 Rendering - loading:", loading, "user:", user, "error:", error);
 
   if (loading) {
     return (
       <div className="text-center mt-10">
         <p>Loading...</p>
-        <p className="text-sm text-gray-500 mt-2">Check browser console for logs</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center mt-10">
-        <p className="text-red-500">Error: {error}</p>
       </div>
     );
   }
@@ -80,7 +78,7 @@ export default function Dashboard() {
         <p className="text-lg font-semibold mb-4">Please login</p>
         <a 
           href="/" 
-          className="bg-black text-white px-6 py-3 rounded-lg inline-block"
+          className="bg-black text-white px-6 py-3 rounded-lg inline-block hover:bg-gray-800"
         >
           Go to Login
         </a>
