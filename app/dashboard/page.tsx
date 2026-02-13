@@ -10,32 +10,18 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // ⭐ STEP 1: detect OAuth session from URL
-    const hash = window.location.hash;
+    // ⭐ automatically handles OAuth redirect session
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    };
 
-    if (hash.includes("access_token")) {
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session?.user) {
-          setUser(data.session.user);
-        }
-        setLoading(false);
-      });
-    } else {
-      // ⭐ STEP 2: normal session check
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session?.user) {
-          setUser(data.session.user);
-        }
-        setLoading(false);
-      });
-    }
+    getSession();
 
-    // ⭐ STEP 3: listen for login events
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-        }
+        setUser(session?.user ?? null);
       }
     );
 
